@@ -1,212 +1,316 @@
-
-
 DROP DATABASE IF EXISTS dos;
 CREATE DATABASE dos;
 USE dos;
 
-CREATE TABLE Branch
+/*==============================================================*/
+/* Table: BRANCH                                                */
+/*==============================================================*/
+create table BRANCH
 (
-    branch_id   SMALLINT,
-    phone       CHAR(12)        NOT NULL,
-    address     VARCHAR(100)    NOT NULL,
-    name        VARCHAR(20)     NOT NULL,
-    CONSTRAINT branch_pk PRIMARY KEY (branch_id)
-);
-
-CREATE TABLE `User`
-(
-    username    VARCHAR(20),
-    `password`  VARCHAR(50) NOT NULL,
-    phone       CHAR(12),
-    address     VARCHAR(100),
-    signup_date DATE        NOT NULL,
-    CONSTRAINT user_pk PRIMARY KEY (username)
-);
-
-CREATE TABLE Customer
-(
-    username    VARCHAR(20),
-    CONSTRAINT customer_pk PRIMARY KEY (username),
-    CONSTRAINT customer_fk FOREIGN KEY (username)
-        REFERENCES `User`(username) ON DELETE CASCADE
-);
-
-CREATE TABLE Administrator
-(
-    username    VARCHAR(20),
-    CONSTRAINT admin_pk PRIMARY KEY (username),
-    CONSTRAINT admin_fk FOREIGN KEY (username) 
-        REFERENCES `User`(username) ON DELETE CASCADE
-);
-
-CREATE TABLE Worker
-(
-    username    VARCHAR(20),
-    branch_id   SMALLINT    NOT NULL,
-    CONSTRAINT worker_pk PRIMARY KEY (username, branch_id),
-    CONSTRAINT worker_c_fk FOREIGN KEY (username) 
-        REFERENCES `User`(username) ON DELETE CASCADE,
-    CONSTRAINT worker_b_fk FOREIGN KEY (branch_id) 
-        REFERENCES Branch(branch_id)
-);
-
-CREATE TABLE `Order`
-(
-    order_id			INT,
-    username			VARCHAR(20) NOT NULL,
-    branch_id   		SMALLINT,
-    order_time			DATE		NOT NULL,
-    total_price 		INT			NOT NULL	DEFAULT 0,
-    is_deliver			TINYINT(1)	NOT NULL	DEFAULT 0,
-    pickup_deliver_time	DATE,
-    CONSTRAINT order_pk PRIMARY KEY (order_id),
-    CONSTRAINT order_c_fk FOREIGN KEY (username) 
-        REFERENCES Customer(username),
-    CONSTRAINT order_b_fk FOREIGN KEY (branch_id) 
-        REFERENCES Branch(branch_id)
+   BRANCH_ID            smallint not null,
+   PHONE                char(12) not null,
+   STREET               varchar(50) not null,
+   CITY                 varchar(20) not null,
+   STATE                varchar(20) not null,
+   ZIPCODE              char(5) not null,
+   NAME                 varchar(20) not null,
+   primary key (BRANCH_ID)
 );
 
 
-CREATE TABLE Paycard
+
+/*==============================================================*/
+/* Table: USER                                                  */
+/*==============================================================*/
+create table USER
 (
-    paycard_id      INT,
-    crypt_card_num  VARCHAR(50) NOT NULL,
-    card_type       CHAR(10)    NOT NULL,
-    cardholder_name VARCHAR(50) NOT NULL,
-    expire_date     DATE        NOT NULL,
-    CONSTRAINT paycard_pk PRIMARY KEY (paycard_id)
+   USERNAME             varchar(20) not null,
+   PASSWORD             varchar(100) not null,
+   PHONE                char(12),
+   STREET               varchar(50),
+   CITY                 varchar(20),
+   STATE                varchar(20),
+   ZIPCODE              char(5),
+   SIGNUP_DATE          date not null,
+   primary key (USERNAME)
 );
 
--- Paycard used by customer relationship
-CREATE TABLE Cust_Paycard
+
+create table CUSTOMER
 (
-    paycard_id  INT,
-    username    VARCHAR(20) NOT NULL,
-    CONSTRAINT cust_paycard_pk PRIMARY KEY (paycard_id, username),
-    CONSTRAINT cust_paycard_p_fk FOREIGN KEY (paycard_id) 
-        REFERENCES Paycard(paycard_id),
-    CONSTRAINT cust_paycard_c_fk FOREIGN KEY (username) 
-        REFERENCES Customer(username)
+    USERNAME    varchar(20),
+    constraint customer_pk primary key (username),
+    constraint customer_fk foreign key (username)
+        references USER (USERNAME) on delete cascade
 );
 
-CREATE TABLE Coupon_Dict
+
+create table ADMINISTRATOR
 (
-    coupon_id   INT,
-    value       DECIMAL(5,2)    NOT NULL,
-    CONSTRAINT coupon_dict_pk PRIMARY KEY(coupon_id)
+    USERNAME    varchar(20),
+    constraint ADMIN_PK primary key (USERNAME),
+    constraint ADMIN_FK foreign key (username) 
+        references USER (USERNAME) on delete cascade
 );
 
--- coupong rewarded to user
-CREATE TABLE Reward
+
+CREATE TABLE WORKER
 (
-    coupon_id   INT,
-    username    VARCHAR(20),
-    valid_start DATE    NOT NULL,
-    valid_end   DATE    NOT NULL,	
-    used_date   DATE,
-    CONSTRAINT reward_pk PRIMARY KEY (coupon_id, username),
-    CONSTRAINT reward_cd_fk FOREIGN KEY (coupon_id) 
-        REFERENCES Coupon_Dict(coupon_id),
-    CONSTRAINT reward_c_fk FOREIGN KEY (username) 
-        REFERENCES Customer(username)
+    USERNAME    varchar(20),
+    BRANCH_ID   smallint    not null,
+    constraint WORKER_PK primary key (USERNAME, BRANCH_ID),
+    constraint WORKER_C_FK foreign key (USERNAME) 
+        references USER (USERNAME) on delete cascade,
+    constraint worker_b_fk foreign key (BRANCH_ID) 
+        references BRANCH (BRANCH_ID)
 );
 
-CREATE TABLE Delivery_Setting
+
+
+/*==============================================================*/
+/* Table: DEFAULT_PAYCARD                                       */
+/*==============================================================*/
+create table DEFAULT_PAYCARD
 (
-    branch_id   SMALLINT,
-    fee         DECIMAL(4,2)    NOT NULL,
-    CONSTRAINT delivery_setting_pk PRIMARY KEY(branch_id),
-    CONSTRAINT delivery_setting_fk FOREIGN KEY (branch_id) 
-        REFERENCES Branch(branch_id)
+   USERNAME             varchar(20) not null,
+   CARD_NUM             varchar(50) not null,
+   CARD_TYPE            varchar(10) not null,
+   CARDHOLDER_NAME      varchar(50) not null,
+   EXPIRE_DATE          date not null,
+   primary key (USERNAME)
 );
 
-CREATE TABLE Delivery_Info
+alter table DEFAULT_PAYCARD add constraint FK_REFERENCE_6 foreign key (USERNAME)
+      references USER (USERNAME) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: COUPON_DICT                                           */
+/*==============================================================*/
+create table COUPON_DICT
 (
-    order_id    INT,
-    branch_id   SMALLINT,
-    username    VARCHAR(20) NOT NULL,	
-    street      VARCHAR(50) NOT NULL,
-    city        VARCHAR(20) NOT NULL,
-    state       CHAR(20)    NOT NULL,
-    zipcode     CHAR(5)     NOT NULL,
-    CONSTRAINT delivery_info_pk PRIMARY KEY (order_id),
-    CONSTRAINT delivery_info_fk FOREIGN KEY (order_id) 
-        REFERENCES `Order`(order_id),
-    CONSTRAINT delivery_info_ds_fk FOREIGN KEY (branch_id) 
-        REFERENCES Delivery_Setting(branch_id),
-    CONSTRAINT delivery_info_c_fk FOREIGN KEY (username) 
-        REFERENCES Customer(username)
+   COUPON_ID            int not null,
+   VALUE                float(5,2) not null,
+   primary key (COUPON_ID)
 );
 
-CREATE TABLE Catalog_Dict
+
+
+/*==============================================================*/
+/* Table: REWARD                                                */
+/*==============================================================*/
+create table REWARD
 (
-    catalog_id  SMALLINT,
-    name        VARCHAR(20) NOT NULL,
-    description VARCHAR(200),
-    CONSTRAINT catalog_dict_pk PRIMARY KEY (catalog_id)
+   REWARD_ID            int not null,
+   COUPON_ID            int not null,
+   USERNAME             varchar(20) not null,
+   VALID_START          date not null,
+   VALID_END            date not null,
+   USED_DATE            date,
+   primary key (REWARD_ID)
 );
 
--- Branch has catalogs
-CREATE TABLE Branch_Catalog
+alter table REWARD add constraint FK_REFERENCE_7 foreign key (USERNAME)
+      references USER (USERNAME) on delete restrict on update restrict;
+
+alter table REWARD add constraint FK_REFERENCE_8 foreign key (COUPON_ID)
+      references COUPON_DICT (COUPON_ID) on delete restrict on update restrict;
+
+
+
+
+/*==============================================================*/
+/* Table: DELIVERY_SETTING                                      */
+/*==============================================================*/
+create table DELIVERY_SETTING
 (
-    branch_id   SMALLINT,
-    catalog_id  SMALLINT,
-    CONSTRAINT branch_catalog_pk PRIMARY KEY (branch_id, catalog_id),
-    CONSTRAINT branch_catalog_b_fk FOREIGN KEY (branch_id) 
-        REFERENCES Branch(branch_id),
-    CONSTRAINT branch_catalog_c_fk FOREIGN KEY (catalog_id) 
-        REFERENCES Catalog_Dict(catalog_id)
+   BRANCH_ID            smallint not null,
+   PROVIDABLE           boolean not null,
+   FEE                  float(4,2),
+   primary key (BRANCH_ID)
 );
 
-CREATE TABLE Dish_Dict
+alter table DELIVERY_SETTING add constraint FK_REFERENCE_3 foreign key (BRANCH_ID)
+      references BRANCH (BRANCH_ID) on delete restrict on update restrict;
+
+      
+
+
+/*==============================================================*/
+/* Table: CATALOG_DICT                                          */
+/*==============================================================*/
+create table CATALOG_DICT
 (
-    dish_id     INT,
-    catalog_id  SMALLINT    NOT NULL,
-    name        VARCHAR(20) NOT NULL,
-    description VARCHAR(200),
-    picture_dir VARCHAR(200),
-    CONSTRAINT dish_dict_pk PRIMARY KEY (dish_id),
-    CONSTRAINT dish_dict_fk FOREIGN KEY (catalog_id) 
-        REFERENCES Catalog_Dict(catalog_id)
+   CATALOG_ID           smallint not null,
+   NAME                 varchar(20) not null,
+   DESCRIPTION          varchar(200),
+   primary key (CATALOG_ID)
 );
 
-CREATE TABLE Dish
+
+
+/*==============================================================*/
+/* Table: BRANCH_CATALOG                                        */
+/*==============================================================*/
+create table BRANCH_CATALOG
 (
-    branch_id           SMALLINT,
-    dish_id             INT,
-    inventory_quantity  SMALLINT        NOT NULL DEFAULT 0,
-    price               DECIMAL(5,2)    NOT NULL,
-    CONSTRAINT dish_pk PRIMARY KEY (branch_id, dish_id),
-    CONSTRAINT dish_b_fk FOREIGN KEY (branch_id) 
-        REFERENCES Branch(branch_id),
-    CONSTRAINT dish_d_fk FOREIGN KEY (dish_id) 
-        REFERENCES Dish_Dict(dish_id)
+   ID                   int not null,
+   BRANCH_ID            smallint not null,
+   CATALOG_ID           smallint not null,
+   primary key (ID)
 );
 
-CREATE TABLE Dish_Detail
+alter table BRANCH_CATALOG add constraint FK_REFERENCE_1 foreign key (CATALOG_ID)
+      references CATALOG_DICT (CATALOG_ID) on delete restrict on update restrict;
+
+alter table BRANCH_CATALOG add constraint FK_REFERENCE_9 foreign key (BRANCH_ID)
+      references BRANCH (BRANCH_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: DISH_DICT                                             */
+/*==============================================================*/
+create table DISH_DICT
 (
-    order_id        INT,
-    branch_id       SMALLINT,
-    dish_id         INT,
-    order_quantity  SMALLINT    NOT NULL    DEFAULT 1,
-    CONSTRAINT dish_detail_pk PRIMARY KEY (order_id, branch_id, dish_id),
-    CONSTRAINT dish_detail_o_fk FOREIGN KEY (order_id) 
-        REFERENCES `Order`(order_id),
-    CONSTRAINT dish_detail_d_fk FOREIGN KEY (branch_id, dish_id) 
-        REFERENCES Dish(branch_id, dish_id)
+   DISH_ID              int not null,
+   CATALOG_ID           smallint not null,
+   NAME                 varchar(20) not null,
+   DESCRIPTION          varchar(200),
+   PICTURE_DIR          varchar(200),
+   primary key (DISH_ID)
 );
 
-CREATE TABLE Rating
+alter table DISH_DICT add constraint FK_REFERENCE_2 foreign key (CATALOG_ID)
+      references CATALOG_DICT (CATALOG_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: DISH                                                  */
+/*==============================================================*/
+create table DISH
 (
-    username    VARCHAR(20),
-    order_id    INT,
-    branch_id   SMALLINT,
-    dish_id     INT,
-    score       TINYINT NOT NULL,
-    `timestamp` TIMESTAMP,
-    comments    VARCHAR(200),
-    CONSTRAINT rating_u_fk FOREIGN KEY (username) REFERENCES Customer(username),
-    CONSTRAINT rating_d_fk FOREIGN KEY (order_id, branch_id, dish_id) 
-    	REFERENCES Dish_Detail (order_id, branch_id, dish_id) 
+   ID                   int not null,
+   BRANCH_ID            smallint not null,
+   DISH_ID              int not null,
+   PRICE                float(5,2) not null,
+   INVENTORY_QUANTITY   smallint not null,
+   primary key (ID)
 );
 
+alter table DISH add constraint FK_REFERENCE_12 foreign key (BRANCH_ID)
+      references BRANCH (BRANCH_ID) on delete restrict on update restrict;
+
+alter table DISH add constraint FK_REFERENCE_13 foreign key (DISH_ID)
+      references DISH_DICT (DISH_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: "ORDER"                                               */
+/*==============================================================*/
+create table `ORDER`
+(
+   ORDER_ID             int not null,
+   USERNAME             varchar(20) not null,
+   BRANCH_ID            smallint not null,
+   ORDER_TIME           date not null,
+   TOTAL_PRICE          float(8,2) not null,
+   IS_DELIVER           boolean not null,
+   PICKUP_DELIVER_TIME  date,
+   primary key (ORDER_ID)
+);
+
+alter table `ORDER` add constraint FK_REFERENCE_4 foreign key (BRANCH_ID)
+      references BRANCH (BRANCH_ID) on delete restrict on update restrict;
+
+alter table `ORDER` add constraint FK_REFERENCE_5 foreign key (USERNAME)
+      references USER (USERNAME) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: ORDER_PAY_INFO                                        */
+/*==============================================================*/
+create table ORDER_PAY_INFO
+(
+   ORDER_ID             int not null,
+   CARD_NUM             varchar(50) not null,
+   CARD_TYPE            varchar(10) not null,
+   CARDHOLDER_NAME      varchar(50) not null,
+   EXPIRE_DATE          date not null,
+   primary key (ORDER_ID)
+);
+
+alter table ORDER_PAY_INFO add constraint FK_REFERENCE_11 foreign key (ORDER_ID)
+      references `ORDER` (ORDER_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: DELIVERY_INFO                                         */
+/*==============================================================*/
+create table DELIVERY_INFO
+(
+   ORDER_ID             int not null,
+   RECEIVER_NAME        varchar(20) not null,
+   PHONE                char(12) not null,
+   STREET               varchar(50) not null,
+   CITY                 varchar(20) not null,
+   STATE                varchar(20) not null,
+   ZIPCODE              char(5) not null,
+   primary key (ORDER_ID)
+);
+
+alter table DELIVERY_INFO add constraint FK_REFERENCE_10 foreign key (ORDER_ID)
+      references `ORDER` (ORDER_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: ORDER_DISH_DETAIL                                     */
+/*==============================================================*/
+create table ORDER_DISH_DETAIL
+(
+   ID                   int not null,
+   ORDER_ID             int not null,
+   DISH_ID              int not null,
+   ORDER_QUANTITY       smallint not null,
+   primary key (ID)
+);
+
+alter table ORDER_DISH_DETAIL add constraint FK_REFERENCE_14 foreign key (ORDER_ID)
+      references `ORDER` (ORDER_ID) on delete restrict on update restrict;
+
+alter table ORDER_DISH_DETAIL add constraint FK_REFERENCE_15 foreign key (DISH_ID)
+      references DISH_DICT (DISH_ID) on delete restrict on update restrict;
+      
+
+
+/*==============================================================*/
+/* Table: RATING                                                */
+/*==============================================================*/
+create table RATING
+(
+   ID                   int not null,
+   USERNAME             varchar(20) not null,
+   ORDER_ID             int not null,
+   DISH_ID              int not null,
+   SCORE                tinyint not null,
+   TIMESTAMP            datetime not null,
+   COMMENTS             varchar(200),
+   primary key (ID)
+);
+
+alter table RATING add constraint FK_REFERENCE_16 foreign key (USERNAME)
+      references USER (USERNAME) on delete restrict on update restrict;
+
+alter table RATING add constraint FK_REFERENCE_17 foreign key (ORDER_ID)
+      references `ORDER` (ORDER_ID) on delete restrict on update restrict;
+
+alter table RATING add constraint FK_REFERENCE_18 foreign key (DISH_ID)
+      references DISH_DICT (DISH_ID) on delete restrict on update restrict;
+         
+grant all on dos.* to 'dosuser'@'localhost';
