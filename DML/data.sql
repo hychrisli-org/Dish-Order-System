@@ -100,4 +100,4 @@ values (7, 'cust1', 7, 3, 5,  '2000-12-12 18:01:30', 'good!');
 insert into rating(id, username, order_id, dish_id, score,timestamp, comments,branch_id) 
 values (8, 'cust1', 1001, 1, 5, '2017-11-29 02:21:14.15','Yummy yummy! ',1);
 insert into rating(id, username, order_id, dish_id, score,timestamp, comments,branch_id) 
-values (9, 'cust1', 1001, 2, 4, '2017-11-29 02:21:14.15','Too spicy! ',1);
+
